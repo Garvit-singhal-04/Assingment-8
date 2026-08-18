@@ -1,35 +1,3 @@
-Yes. Since this is an **assignment submission with screenshots**, the README should work more like a **build log / implementation guide** rather than a generic project description.
-
-The flow should be:
-
-```text
-1. Environment
-   ↓
-2. Ansible connectivity
-   ↓
-3. Groups
-   ↓
-4. Users + UIDs
-   ↓
-5. Shells
-   ↓
-6. Password policy
-   ↓
-7. Sudo
-   ↓
-8. Directory creation
-   ↓
-9. Permission matrix
-   ↓
-10. Testing
-```
-
-For each step, you can place **your command screenshot immediately after the command**, followed by the expected/result screenshot.
-
-Here's a README structure I recommend using.
-
----
-
 # Ansible Assignment 1 — UserManager
 
 ## Project Management System
@@ -75,10 +43,7 @@ The control node is the local Ubuntu/WSL machine from which Ansible commands are
 ### Managed Node
 
 An Ubuntu EC2 instance is used as the managed server.
-
-### Screenshot
-
-> **Screenshot 1:** EC2 instance running and SSH connection.
+<img width="668" height="534" alt="image" src="https://github.com/user-attachments/assets/135d7a0b-346a-45d3-ad6b-93deeaa09531" />
 
 ---
 
@@ -94,29 +59,14 @@ server1 ansible_host=<EC2_PUBLIC_IP>
 ansible_user=ubuntu
 ansible_ssh_private_key_file=/path/to/key.pem
 ```
-
-The inventory defines the **server**, not the Linux users.
+<img width="639" height="208" alt="image" src="https://github.com/user-attachments/assets/8c965008-7442-425a-923f-b0c9addca9ae" />
 
 ### Test connectivity
 
 ```bash
 ansible managed -i inventory -m ping
 ```
-
-Expected:
-
-```text
-server1 | SUCCESS => {
-    "changed": false,
-    "ping": "pong"
-}
-```
-
-### Screenshot
-
-> **Screenshot 2:** Inventory file.
-
-> **Screenshot 3:** Successful `ansible ping`.
+<img width="657" height="229" alt="image" src="https://github.com/user-attachments/assets/fc1578f3-53b3-4fa9-b770-23a5121d090b" />
 
 ---
 
@@ -133,44 +83,30 @@ admin-group
 Create the Development group:
 
 ```bash
-ansible managed -i inventory -m group \
--a "name=dev-team state=present" --become
+ansible managed -i inventory -m group -a "name=dev-team state=present" --become
 ```
+<img width="1110" height="246" alt="image" src="https://github.com/user-attachments/assets/77403121-4e37-48fd-bc55-81662375d60b" />
 
 Create the DevOps group:
 
 ```bash
-ansible managed -i inventory -m group \
--a "name=devops-team state=present" --become
+ansible managed -i inventory -m group -a "name=devops-team state=present" --become
 ```
+<img width="1106" height="260" alt="image" src="https://github.com/user-attachments/assets/bd552d90-c1f9-42fb-9d8a-8ead04ab61a8" />
 
 Create the Admin group:
 
 ```bash
-ansible managed -i inventory -m group \
--a "name=admin-group state=present" --become
+ansible managed -i inventory -m group -a "name=admin-group state=present" --become
 ```
+<img width="1106" height="260" alt="image" src="https://github.com/user-attachments/assets/93279ec4-88ea-4017-81e2-e3c68c50d9c9" />
 
 ### Verify
 
 ```bash
-ansible managed -i inventory -m command \
--a "getent group dev-team devops-team admin-group"
+ansible managed -i inventory -m command -a "getent group dev-team devops-team admin-group"
 ```
-
-### Result
-
-```text
-dev-team:x:...
-devops-team:x:...
-admin-group:x:...
-```
-
-### Screenshots
-
-> **Screenshot 4:** Commands creating the three groups.
-
-> **Screenshot 5:** `getent group` showing all three groups.
+<img width="1104" height="175" alt="image" src="https://github.com/user-attachments/assets/40b78ec3-4335-40a0-ae8e-0e5d7ff477bf" />
 
 ---
 
@@ -189,39 +125,18 @@ Nine users are required.
 Example:
 
 ```bash
-ansible managed -i inventory -m user \
--a "name=dev1 uid=2000 group=dev-team" --become
+ansible managed -i inventory -m user -a "name=dev1 uid=2000 group=dev-team" --become
 ```
+<img width="1102" height="371" alt="image" src="https://github.com/user-attachments/assets/44592b05-a18e-49f3-82dd-46e76d8a7270" />
 
 The same approach is used for all nine users.
 
 ### Verify
 
 ```bash
-ansible managed -i inventory -m command \
--a "getent passwd | grep -E '^(dev1|dev2|dev3|devops1|devops2|devops3|admin1|admin2|admin3):'"
+ansible managed -i inventory -m shell -a "getent passwd | grep -E '^(dev1|dev2|dev3|devops1|devops2|devops3|admin1|admin2|admin3):'"
 ```
-
-### Verify individual user
-
-```bash
-ansible managed -i inventory -m command \
--a "id dev1"
-```
-
-Expected:
-
-```text
-uid=2000(dev1) gid=...(dev-team) groups=...(dev-team)
-```
-
-### Screenshots
-
-> **Screenshot 6:** User creation commands.
-
-> **Screenshot 7:** All nine users in `/etc/passwd`.
-
-> **Screenshot 8:** `id dev1` showing UID and group.
+<img width="1101" height="301" alt="image" src="https://github.com/user-attachments/assets/c8a94730-ca93-4afa-b3ed-9aa1edbc2b62" />
 
 ---
 
@@ -238,39 +153,25 @@ admin-group    → /bin/bash
 Zsh was installed because it was not initially available on the EC2.
 
 ```bash
-ansible managed -i inventory -m apt \
--a "name=zsh state=present" --become
+ansible managed -i inventory -m apt -a "name=zsh state=present" --become
 ```
+<img width="1120" height="578" alt="image" src="https://github.com/user-attachments/assets/8490c76d-54e8-4832-a65d-2ba351132ee1" />
 
 Configure DevOps users:
 
 ```bash
-ansible managed -i inventory -m user \
--a "name=devops1 shell=/usr/bin/zsh" --become
+ansible managed -i inventory -m user -a "name=devops1 shell=/usr/bin/zsh" --become
 ```
+<img width="1137" height="362" alt="image" src="https://github.com/user-attachments/assets/e1f6ee52-cfa4-4c5b-bc04-f5aa22167bf9" />
 
 The same shell configuration is applied to `devops2` and `devops3`.
 
 ### Verify
 
 ```bash
-ansible managed -i inventory -m command \
--a "getent passwd devops1"
+ansible managed -i inventory -m command -a "getent passwd"
 ```
-
-Expected final field:
-
-```text
-/usr/bin/zsh
-```
-
-### Screenshots
-
-> **Screenshot 9:** Zsh installation.
-
-> **Screenshot 10:** DevOps user shell configuration.
-
-> **Screenshot 11:** `getent passwd` showing `/usr/bin/zsh`.
+<img width="495" height="172" alt="image" src="https://github.com/user-attachments/assets/1d810e20-d07b-4969-ae91-521dce606e09" />
 
 ---
 
@@ -286,30 +187,16 @@ Maximum password age: 90 days
 Example:
 
 ```bash
-ansible managed -i inventory -m user \
--a "name=dev1 password_expire_min=1 password_expire_max=90" \
---become
+ansible managed -i inventory -m user -a "name=dev1 password_expire_min=1 password_expire_max=90" --become
 ```
+<img width="1193" height="363" alt="image" src="https://github.com/user-attachments/assets/709d1d21-af9a-4c39-ab08-c5780495054f" />
 
 ### Verify
 
 ```bash
-ansible managed -i inventory -m command \
--a "chage -l dev1"
+ansible managed -i inventory -m command -a "chage -l dev1"
 ```
-
-Expected:
-
-```text
-Minimum number of days between password change : 1
-Maximum number of days between password change : 90
-```
-
-### Screenshots
-
-> **Screenshot 12:** Password policy configuration.
-
-> **Screenshot 13:** `chage -l dev1` showing the expiry policy.
+<img width="1183" height="233" alt="image" src="https://github.com/user-attachments/assets/cf63ba09-544a-472b-a7c6-be14142ddca3" />
 
 ---
 
@@ -341,6 +228,11 @@ Configuration is stored in:
 ```text
 /etc/sudoers.d/
 ```
+```bash
+ansible managed -i inventory -m copy -a "content='%admin-group ALL=(ALL) ALL\n' dest=/etc/sudoers.d/admin-group owner=root group=root mode=0440" --become
+```
+<img width="1202" height="407" alt="image" src="https://github.com/user-attachments/assets/5b4e62eb-f48c-4a66-9e62-b7132a7f6039" />
+
 
 ### Verify
 
@@ -357,16 +249,7 @@ And verify that a development user does not have the same sudo rule:
 ```bash
 sudo -l -U dev1
 ```
-
-### Screenshots
-
-> **Screenshot 14:** Sudo configuration files.
-
-> **Screenshot 15:** `sudo -l -U devops1`.
-
-> **Screenshot 16:** `sudo -l -U admin1`.
-
-> **Screenshot 17:** `sudo -l -U dev1`.
+<img width="549" height="207" alt="image" src="https://github.com/user-attachments/assets/70749878-7bf3-41ed-92f6-9cb9846d634b" />
 
 ---
 
@@ -411,24 +294,18 @@ Create workspaces inside each user's home directory.
 Example:
 
 ```bash
-ansible managed -i inventory -m file \
--a "path=/home/dev1/workspace state=directory" \
---become
+ansible managed -i inventory -m file -a "path=/home/dev1/workspace state=directory owner=dev1 group=dev-team mode=0750" --become
 ```
+<img width="1193" height="353" alt="image" src="https://github.com/user-attachments/assets/da4d93f7-5377-42df-8dc5-4ed22779aa23" />
 
 All nine users receive a `workspace` directory.
 
 ### Verify
 
 ```bash
-ansible managed -i inventory -m command \
--a "find /home -maxdepth 2 -type d -name workspace" \
---become
+ansible managed -i inventory -m command -a "find /home -maxdepth 2 -type d -name workspace" --become
 ```
-
-### Screenshot
-
-> **Screenshot 18:** All nine workspace directories.
+<img width="1196" height="285" alt="image" src="https://github.com/user-attachments/assets/89e775fb-2c83-4e73-86bc-f5b2822e92fe" />
 
 ---
 
@@ -445,18 +322,16 @@ Create:
 Example:
 
 ```bash
-ansible managed -i inventory -m file \
--a "path=/project-management/teams/dev-team state=directory" \
---become
+ansible managed -i inventory -m file -a "path=/project-management/teams/dev-team state=directory" --become
 ```
+<img width="1198" height="336" alt="image" src="https://github.com/user-attachments/assets/8253539a-1e35-48c9-a463-9b18be530276" />
 
-### Screenshot
-
-> **Screenshot 19:** Team directories created.
-
----
 
 # 8.3 Project Directories
+```bash
+ansible managed -i inventory -m file -a "path=/project-management/projects state=directory" --become
+```
+<img width="1198" height="336" alt="image" src="https://github.com/user-attachments/assets/441ff1fc-9b57-4f62-9bd1-1450a77133fc" />
 
 Create:
 
@@ -472,9 +347,8 @@ under:
 /project-management/projects/
 ```
 
-### Screenshot
+<img width="1188" height="569" alt="image" src="https://github.com/user-attachments/assets/28c1f0fd-a132-4f41-a9d6-be01fa105c07" />
 
-> **Screenshot 20:** Project directories.
 
 ---
 
@@ -487,10 +361,22 @@ Create:
 /project-management/archive
 /project-management/admin
 ```
+```bash
+ansible managed -i inventory -m file -a "path=/project-management/shared state=directory" --become
+```
+<img width="1198" height="336" alt="image" src="https://github.com/user-attachments/assets/2b4c60df-9913-45ce-9edc-a7e26b19b98e" />
 
-### Screenshot
 
-> **Screenshot 21:** Complete `/project-management` directory structure.
+```bash
+ansible managed -i inventory -m file -a "path=/project-management/archive state=directory" --become
+```
+<img width="1198" height="336" alt="image" src="https://github.com/user-attachments/assets/f83c4f86-695e-42bf-98ee-cef831096ea4" />
+
+```bash
+ansible managed -i inventory -m file -a "path=/project-management/admin state=directory" --become
+```
+<img width="1183" height="334" alt="image" src="https://github.com/user-attachments/assets/92f28250-b299-448e-965d-30c84e585b3b" />
+
 
 ---
 
@@ -513,12 +399,6 @@ The exact Linux implementation is configured below.
 
 # 10. Personal Workspace Permissions
 
-Example:
-
-```text
-/home/dev1/workspace
-```
-
 Requirement:
 
 ```text
@@ -530,26 +410,12 @@ others    → None
 Configure:
 
 ```bash
-ansible managed -i inventory -m file \
--a "path=/home/dev1/workspace owner=dev1 group=dev-team mode=0750" \
---become
+ansible managed -i invtory -m file \-a "path=/home/dev1/workspace owner=dev1 group=dev-team mode=0750" --become
 ```
-
-Result:
-
-```text
-0750
-
-dev1       → rwx
-dev-team   → r-x
-others     → ---
-```
+## Given during the creation of workspaces
 
 The same model is applied to all nine users.
-
-### Screenshot
-
-> **Screenshot 22:** `ls -ld /home/dev1/workspace`.
+<img width="604" height="136" alt="image" src="https://github.com/user-attachments/assets/fc5b8835-e865-4e2c-985e-6a504eb59cd5" />
 
 ---
 
