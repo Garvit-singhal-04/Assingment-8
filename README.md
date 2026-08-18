@@ -382,19 +382,8 @@ ansible managed -i inventory -m file -a "path=/project-management/admin state=di
 
 # 9. Security & Permission Matrix
 
-The required permission model is:
-
-| Resource           | Owner | Team       | Others     |
-| ------------------ | ----- | ---------- | ---------- |
-| Personal Workspace | Full  | Read       | None       |
-| Team Directory     | Full  | —          | Read       |
-| Project Directory  | Full  | Read/Write | Read       |
-| Shared Resources   | —     | Read/Write | Read/Write |
-| Archive            | Full  | Read       | Read       |
-| Admin Area         | Full  | Admin only | None       |
 
 The exact Linux implementation is configured below.
-
 ---
 
 # 10. Personal Workspace Permissions
@@ -410,7 +399,7 @@ others    → None
 Configure:
 
 ```bash
-ansible managed -i invtory -m file \-a "path=/home/dev1/workspace owner=dev1 group=dev-team mode=0750" --become
+ansible managed -i inventory -m file \-a "path=/home/dev1/workspace owner=dev1 group=dev-team mode=0750" --become
 ```
 ## Given during the creation of workspaces
 
@@ -437,9 +426,7 @@ other teams → Read-only
 Configure:
 
 ```bash
-ansible managed -i inventory -m file \
--a "path=/project-management/teams/dev-team owner=root group=dev-team mode=0775" \
---become
+ansible managed -i inventory -m file -a "path=/project-management/teams/dev-team owner=root group=dev-team mode=0775" --become
 ```
 
 Result:
@@ -458,8 +445,8 @@ admin-group
 ```
 
 ### Screenshot
+<img width="1203" height="171" alt="image" src="https://github.com/user-attachments/assets/ee478ce9-8b05-4017-9017-64c92877f05e" />
 
-> **Screenshot 23:** Team directory permissions.
 
 ---
 
@@ -484,30 +471,23 @@ Team: dev-team
 ### WebApp
 
 ```bash
-ansible managed -i inventory -m file \
--a "path=/project-management/projects/WebApp owner=dev1 group=dev-team mode=0775" \
---become
+ansible managed -i inventory -m file -a "path=/project-management/projects/WebApp owner=dev1 group=dev-team mode=0775" --become
 ```
 
 ### API
 
 ```bash
-ansible managed -i inventory -m file \
--a "path=/project-management/projects/API owner=devops1 group=devops-team mode=0775" \
---become
+ansible managed -i inventory -m file -a "path=/project-management/projects/API owner=devops1 group=devops-team mode=0775" --become
 ```
 
 ### Mobile
 
 ```bash
-ansible managed -i inventory -m file \
--a "path=/project-management/projects/Mobile owner=dev2 group=dev-team mode=0775" \
---become
+ansible managed -i inventory -m file -a "path=/project-management/projects/Mobile owner=dev2 group=dev-team mode=0775" --become
 ```
 
-### Screenshot
+<img width="1203" height="171" alt="image" src="https://github.com/user-attachments/assets/c81686f9-9c75-4c73-b41c-1fd01997b37d" />
 
-> **Screenshot 24:** Project directory ownership and permissions.
 
 ---
 
@@ -535,9 +515,8 @@ rwx
 
 In production, a dedicated shared group or ACL would be preferable because `0777` gives write access to all users on the system.
 
-### Screenshot
+<img width="1203" height="134" alt="image" src="https://github.com/user-attachments/assets/08824238-3f89-4c6c-a4be-02b218882332" />
 
-> **Screenshot 25:** Shared directory permissions.
 
 ---
 
@@ -565,9 +544,8 @@ Users can:
 
 Users cannot create or delete files in the archive directory.
 
-### Screenshot
+<img width="1203" height="134" alt="image" src="https://github.com/user-attachments/assets/98a385d6-d113-409c-aaae-251e1e28d095" />
 
-> **Screenshot 26:** Archive permissions.
 
 ---
 
@@ -595,116 +573,12 @@ admin-group  → rwx
 others       → ---
 ```
 
-### Screenshot
+<img width="1203" height="134" alt="image" src="https://github.com/user-attachments/assets/c55d7fb0-f608-4c09-99d6-d7c74a72850a" />
 
-> **Screenshot 27:** Admin directory permissions.
-
----
-
-# 16. Permission Testing
-
-The configuration is tested using different users.
-
-## Development user
-
-Test:
-
-```bash
-sudo -u dev1 ls /project-management/teams/dev-team
-```
-
-Development user should have full team-directory access.
 
 ---
 
-## DevOps user
 
-Test:
-
-```bash
-sudo -u devops1 ls /project-management/teams/dev-team
-```
-
-DevOps users should have read/traverse access but should not be able to create files there.
-
----
-
-## Admin user
-
-Test:
-
-```bash
-sudo -u admin1 ls /project-management/admin
-```
-
-Admin users should have full access.
-
----
-
-## Non-admin user
-
-Test:
-
-```bash
-sudo -u dev1 ls /project-management/admin
-```
-
-Expected:
-
-```text
-Permission denied
-```
-
-### Screenshots
-
-> **Screenshot 28:** Development user permission test.
-
-> **Screenshot 29:** DevOps user permission test.
-
-> **Screenshot 30:** Admin user permission test.
-
-> **Screenshot 31:** Non-admin denied from admin area.
-
----
-
-# 17. Final Verification
-
-Check all users:
-
-```bash
-ansible managed -i inventory -m command \
--a "getent passwd | grep -E '^(dev1|dev2|dev3|devops1|devops2|devops3|admin1|admin2|admin3):'"
-```
-
-Check all groups:
-
-```bash
-ansible managed -i inventory -m command \
--a "getent group dev-team devops-team admin-group"
-```
-
-Check complete project structure:
-
-```bash
-ansible managed -i inventory -m command \
--a "find /project-management -type d" --become
-```
-
-Check all workspaces:
-
-```bash
-ansible managed -i inventory -m command \
--a "find /home -maxdepth 2 -type d -name workspace" --become
-```
-
-Check permissions:
-
-```bash
-ansible managed -i inventory -m command \
--a "ls -ld /project-management/*" --become
-```
-
----
 
 # 18. Implementation Flow
 
@@ -778,4 +652,3 @@ The UserManager project demonstrates how Ansible can automate Linux system admin
 * Shared resources
 * Administrative access control
 
-The implementation was built incrementally and verified at each stage using Ansible commands and Linux verification utilities such as `id`, `getent`, `chage`, `ls`, and `find`.
