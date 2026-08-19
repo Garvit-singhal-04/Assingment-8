@@ -1,0 +1,278 @@
+#!/bin/bash
+
+
+# Database file
+DB="$HOME/otssh_db"
+
+# Create database if it doesn't exist
+[[ -f "$DB" ]] || touch "$DB"
+
+
+add_connection() {
+    name=""
+    host=""
+    user=""
+    port=22
+    key=""
+    while [[ $# -gt 0 ]]
+
+do
+
+    case "$1" in
+
+        -n)
+            name="$2"
+	    shift 2
+            ;;
+
+        -h)
+            host="$2"
+	    shift 2
+            ;;
+
+        -u)
+	    user="$2"
+	    shift 2
+            ;;
+
+        -p)
+	    port="$2"
+	    shift 2
+            ;;
+
+        -i)
+	    key="$2"
+	    shift 2
+            ;;
+	 *)
+	    echo "Unknown Option: $1"
+	    shift
+	    ;;
+    esac
+done
+
+if  grep -q "^$name|" "$DB";then
+	echo "Server with this Name:  $name already exist"
+	return 1
+else
+	echo "$name|$host|$user|$port|$key" >> "$DB"
+	echo "Connection added succesfully"
+fi
+}
+
+list_connections() {
+     cut -d "|" -f1 "$DB"
+}
+
+list_details() {
+
+    while IFS="|" read name host user port key
+    do
+        echo -n "$name: ssh "
+
+        if [[ -n "$key" ]]; then
+            echo -n "-i $key "
+        fi
+
+        if [[ "$port" != "22" ]]; then
+            echo -n "-p $port "
+        fi
+
+        echo "$user@$host"
+
+    done < "$DB"
+
+}
+
+update_connection() {
+
+    name=""
+    host=""
+    user=""
+    port=22
+    key=""
+
+    while [[ $# -gt 0 ]]
+    do
+        case "$1" in
+
+            -n)
+                name="$2"
+                shift 2
+                ;;
+
+            -h)
+                host="$2"
+                shift 2
+                ;;
+
+            -u)
+                user="$2"
+                shift 2
+                ;;
+
+            -p)
+                port="$2"
+                shift 2
+                ;;
+
+            -i)
+                key="$2"
+                shift 2
+                ;;
+
+            *)
+                echo "Unknown option: $1"
+                shift
+                ;;
+        esac
+    done
+
+    if [[ -z "$name" || -z "$host" || -z "$user" ]]; then
+        echo "Name, Host and User are required."
+        return 1
+    fi
+
+    temp_db="$DB.tmp"
+    found=0
+
+    > "$temp_db"
+
+    while IFS="|" read old_name old_host old_user old_port old_key
+    do
+        if [[ "$old_name" == "$name" ]]; then
+            echo "$name|$host|$user|$port|$key" >> "$temp_db"
+            found=1
+        else
+            echo "$old_name|$old_host|$old_user|$old_port|$old_key" >> "$temp_db"
+        fi
+    done < "$DB"
+
+    if [[ "$found" -eq 1 ]]; then
+        mv "$temp_db" "$DB"
+        echo "Connection '$name' updated successfully."
+    else
+        rm "$temp_db"
+        echo "[ERROR]: Connection '$name' not found."
+    fi
+}
+
+delete_connection() {
+
+    server="$1"
+    temp_db="$DB.tmp"
+    found=0
+
+    > "$temp_db"
+
+    while IFS="|" read name host user port key
+    do
+        if [[ "$name" == "$server" ]]; then
+            found=1
+            continue
+        fi
+
+        echo "$name|$host|$user|$port|$key" >> "$temp_db"
+
+    done < "$DB"
+
+    if [[ "$found" -eq 1 ]]; then
+        mv "$temp_db" "$DB"
+        echo "Connection '$server' deleted successfully."
+    else
+        rm "$temp_db"
+        echo "[ERROR]: Connection '$server' not found."
+    fi
+}
+
+connect_server() {
+
+    server="$1"
+
+    found=0
+
+    connect_host=""
+    connect_user=""
+    connect_port=""
+    connect_key=""
+
+    while IFS="|" read name host user port key
+    do
+        if [[ "$name" == "$server" ]]; then
+
+            connect_host="$host"
+            connect_user="$user"
+            connect_port="$port"
+            connect_key="$key"
+
+            found=1
+            break
+        fi
+
+    done < "$DB"
+
+    if [[ "$found" -eq 0 ]]; then
+        echo "[ERROR]: Server information is not available, please add server first"
+        return 1
+    fi
+
+    echo "Connecting to $server..."
+
+    if [[ -n "$connect_key" && "$connect_port" != "22" ]]; then
+        ssh -i "$connect_key" -p "$connect_port" "$connect_user@$connect_host"
+
+    elif [[ -n "$connect_key" ]]; then
+        ssh -i "$connect_key" "$connect_user@$connect_host"
+
+    elif [[ "$connect_port" != "22" ]]; then
+        ssh -p "$connect_port" "$connect_user@$connect_host"
+
+    else
+        ssh "$connect_user@$connect_host"
+    fi
+}
+
+show_help() {
+cat << EOF
+
+OTSSH - SSH Connection Manager
+
+Usage:
+  otssh -a -n <name> -h <host> -u <user> [-p <port>] [-i <key>]
+  otssh -u -n <name> -h <host> -u <user> [-p <port>] [-i <key>]
+  otssh ls
+  otssh ls -d
+  otssh rm <name>
+  otssh <name>
+
+EOF
+}
+
+
+
+# Main Program
+if [[ "$#" -eq 0 ]]; then
+    show_help
+
+elif [[ "$1" == "-a" ]]; then
+    shift
+    add_connection "$@"
+
+elif [[ "$1" == "-u" ]]; then
+    shift
+    update_connection "$@"
+
+elif [[ "$1" == "ls" ]]; then
+	if [[ "$2" == "-d" ]];then
+		list_details
+	else
+   		 list_connections
+	fi
+
+elif [[ "$1" == "rm" ]]; then
+    delete_connection "$2"
+
+else
+    connect_server "$1"
+fi
+
