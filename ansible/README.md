@@ -47,3 +47,58 @@ server1 → server2 → server3
 This satisfies the requirement that worker nodes should be updated one by one.
 
 
+## Part 2: Nginx Log Management
+
+Nginx stores its logs in `/var/log/nginx`. To prevent old logs from continuously consuming disk space, `logrotate` was configured on all worker nodes.
+
+### Check current log usage
+
+```bash
+ansible workers -i inventory -m command -a "du -sh /var/log/nginx" --become --forks 1
+```
+<img width="1212" height="330" alt="image" src="https://github.com/user-attachments/assets/4434cd64-0536-4143-b22c-de86a115127f" />
+
+### If not installed Install logrotate
+
+```bash
+ansible workers -i inventory -m apt -a "name=logrotate state=present update_cache=yes" --become --forks 1
+```
+<img width="1212" height="637" alt="image" src="https://github.com/user-attachments/assets/43619a62-68a9-4005-a464-e4456aa32e2d" />
+
+### Configure log rotation
+
+```bash
+ansible workers -i inventory -m copy -a 'dest=/etc/logrotate.d/nginx content="/var/log/nginx/*.log {
+    size 100M
+    rotate 9
+    compress
+    copytruncate
+}
+"' --become --forks 1
+```
+<img width="1195" height="465" alt="image" src="https://github.com/user-attachments/assets/6c50ce07-f38e-49a9-a526-e3f22922d583" />
+
+
+The configuration rotates Nginx logs when they reach approximately 100 MB and retains 9 rotated copies in addition to the current log. Old logs are compressed.
+
+This keeps the retained Nginx logs around the 1 GB range while preventing unlimited log growth.
+
+
+### Test log rotation
+
+```bash
+ansible workers -i inventory -m command -a "logrotate -f /etc/logrotate.d/nginx" --become --forks 1
+```
+<img width="1193" height="319" alt="image" src="https://github.com/user-attachments/assets/d396b5fd-af71-4878-bf26-ad13a442bc47" />
+
+
+### Verify rotated logs
+
+```bash
+ansible workers -i inventory -m command -a "ls -lh /var/log/nginx" --become --forks 1
+```
+
+<img width="1191" height="657" alt="image" src="https://github.com/user-attachments/assets/f03a5530-601f-450d-8283-b755adde2e4b" />
+
+
+
