@@ -1,4 +1,4 @@
-# Ansible Assignment 2
+<img width="1217" height="564" alt="image" src="https://github.com/user-attachments/assets/72c63963-88cd-49d2-83e9-0ce4664fd52c" /># Ansible Assignment 2
 
 ## Objective
 
@@ -18,15 +18,21 @@ For testing the website rotation, the schedule can temporarily be changed from *
 
 ---
 
-# 1. Inventory
+#  Inventory
 
 The worker nodes are defined in the Ansible inventory:
 
 ```ini
 [workers]
-worker1
-worker2
-worker3
+worker1 ansible_host=65.2.69.67
+worker2 ansible_host=13.232.43.62
+worker3 ansible_host=43.204.234.167
+
+[workers:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=/home/garvit/ansible/ansible.pem
+
+
 ```
 
 Check connectivity:
@@ -34,17 +40,12 @@ Check connectivity:
 ```bash
 ansible workers -i inventory -m ping
 ```
+<img width="597" height="252" alt="image" src="https://github.com/user-attachments/assets/ce8b45a0-3de1-472c-a1a2-cc89b4285405" />
+<img width="600" height="589" alt="image" src="https://github.com/user-attachments/assets/b5f40ef7-4e57-48a8-86e5-f110aae2a331" />
 
-All workers should return:
-
-```text
-SUCCESS
-"ping": "pong"
-```
 
 ---
-
-# 2. Sequential Execution
+# Sequential Execution
 
 The assignment requires the worker nodes to be updated **one by one**.
 
@@ -60,49 +61,35 @@ Example:
 ansible workers -i inventory -m ping --forks 1
 ```
 
-This makes Ansible process:
-
-```text
-worker1
-   ↓
-worker2
-   ↓
-worker3
-```
-
-instead of executing against all workers concurrently.
 
 ---
 
-# 3. Install Nginx
+#  Install Nginx
 
 Install Nginx on all workers:
 
 ```bash
 ansible workers -i inventory -m apt -a "name=nginx state=present update_cache=yes" --become --forks 1
 ```
+<img width="1190" height="611" alt="image" src="https://github.com/user-attachments/assets/37724ead-fef8-4ec5-8705-d613733e8fc3" />
 
 Start and enable Nginx:
 
 ```bash
 ansible workers -i inventory -m service -a "name=nginx state=started enabled=yes" --become --forks 1
 ```
+<img width="1190" height="611" alt="image" src="https://github.com/user-attachments/assets/3d129f4f-4e19-44f3-b754-0ff4e8dbabc0" />
 
 Verify:
 
 ```bash
 ansible workers -i inventory -m command -a "systemctl is-active nginx" --become --forks 1
 ```
-
-Expected:
-
-```text
-active
-```
+<img width="1193" height="319" alt="image" src="https://github.com/user-attachments/assets/f96d7ef8-9ea1-4c2a-95d6-3dba7e06aa00" />
 
 ---
 
-# 4. Configure Nginx Log Rotation
+# Configure Nginx Log Rotation
 
 Nginx logs are stored in:
 
@@ -115,6 +102,7 @@ Install logrotate:
 ```bash
 ansible workers -i inventory -m apt -a "name=logrotate state=present update_cache=yes" --become --forks 1
 ```
+<img width="1191" height="643" alt="image" src="https://github.com/user-attachments/assets/d70a9de8-4b83-451e-9315-ead4dab5a10d" />
 
 Create the Nginx logrotate configuration:
 
@@ -124,16 +112,10 @@ ansible workers -i inventory -m copy -a 'dest=/etc/logrotate.d/nginx content="/v
     rotate 9
     compress
     delaycompress
-    missingok
-    notifempty
-    create 0640 www-data adm
-    sharedscripts
-    postrotate
-        [ -s /run/nginx.pid ] && kill -USR1 $(cat /run/nginx.pid)
-    endscript
 }
 " mode=0644' --become --forks 1
 ```
+<img width="1184" height="635" alt="image" src="https://github.com/user-attachments/assets/68c5d9b0-30ee-4cb0-9a18-8e236697ceb3" />
 
 ### Configuration explanation
 
@@ -166,62 +148,44 @@ Check the current log usage:
 ```bash
 ansible workers -i inventory -m command -a "du -sh /var/log/nginx" --become --forks 1
 ```
+<img width="1193" height="320" alt="image" src="https://github.com/user-attachments/assets/875ecef6-ad2e-48cf-9592-a08eccbb82c5" />
 
 The total should remain well below the assignment's 1 GB requirement under normal operation.
 
-Test logrotate:
-
-```bash
-ansible workers -i inventory -m command -a "logrotate -d /etc/logrotate.d/nginx" --become --forks 1
-```
-
 ---
 
-# 5. Create Team Member Websites
+#  Create Team Member Websites
 
 For this implementation, the team members are:
 
 ```text
-Tanya
-Heena
+Garvit
+Anya
+Sahil
 Ankur
+Kuldeep
+Arhan
 ```
 
 Create directories:
 
 ```bash
-ansible workers -i inventory -m file -a "path=/var/www/tanya state=directory owner=www-data group=www-data mode=0755" --become --forks 1
+ansible workers -i inventory -m file -a "path=/var/www/garvit state=directory owner=www-data group=www-data mode=0755" --become --forks 1
 ```
+<img width="1193" height="320" alt="image" src="https://github.com/user-attachments/assets/49687824-176e-4e46-bbb6-4ba7878dcebc" />
+
+The same command will be used to create directories of every team member
+```
+
+Create garvit website:
 
 ```bash
-ansible workers -i inventory -m file -a "path=/var/www/heena state=directory owner=www-data group=www-data mode=0755" --become --forks 1
+ansible workers -i inventory -m copy -a 'dest=/var/www/garvit/index.html content="<html><body><h1>garvit Website</h1><p>This is garvit website.</p></body></html>" owner=www-data group=www-data mode=0644' --become --forks 1
 ```
-
-```bash
-ansible workers -i inventory -m file -a "path=/var/www/ankur state=directory owner=www-data group=www-data mode=0755" --become --forks 1
-```
-
-Create Tanya's website:
-
-```bash
-ansible workers -i inventory -m copy -a 'dest=/var/www/tanya/index.html content="<html><body><h1>Tanya Website</h1><p>This is Tanya website.</p></body></html>" owner=www-data group=www-data mode=0644' --become --forks 1
-```
-
-Create Heena's website:
-
-```bash
-ansible workers -i inventory -m copy -a 'dest=/var/www/heena/index.html content="<html><body><h1>Heena Website</h1><p>This is Heena website.</p></body></html>" owner=www-data group=www-data mode=0644' --become --forks 1
-```
-
-Create Ankur's website:
-
-```bash
-ansible workers -i inventory -m copy -a 'dest=/var/www/ankur/index.html content="<html><body><h1>Ankur Website</h1><p>This is Ankur website.</p></body></html>" owner=www-data group=www-data mode=0644' --become --forks 1
-```
-
+websites can be created for every user by replacing appropriate details.
 ---
 
-# 6. Create the Current Website
+# Create the Current Website
 
 A symbolic link is used so that the web server can always serve one fixed location:
 
@@ -229,10 +193,10 @@ A symbolic link is used so that the web server can always serve one fixed locati
 /var/www/current
 ```
 
-Initially point it to Tanya:
+Initially point it to garvit:
 
 ```bash
-ansible workers -i inventory -m file -a "src=/var/www/tanya dest=/var/www/current state=link force=yes" --become --forks 1
+ansible workers -i inventory -m file -a "src=/var/www/garvit dest=/var/www/current state=link force=yes" --become --forks 1
 ```
 
 Check the current website:
@@ -240,18 +204,19 @@ Check the current website:
 ```bash
 ansible workers -i inventory -m command -a "readlink -f /var/www/current" --become --forks 1
 ```
+<img width="1193" height="320" alt="image" src="https://github.com/user-attachments/assets/ec763054-d591-4acb-a9ff-1c014da89624" />
 
 Expected:
 
 ```text
-/var/www/tanya
+/var/www/garvit
 ```
 
 The symlink allows the active website to be changed without modifying the web-server configuration.
 
 ---
 
-# 7. Configure Nginx
+#  Configure Nginx
 
 Create the team Nginx configuration:
 
@@ -269,42 +234,48 @@ ansible workers -i inventory -m copy -a 'dest=/etc/nginx/sites-available/team.co
 }
 " mode=0644' --become --forks 1
 ```
+<img width="1218" height="663" alt="image" src="https://github.com/user-attachments/assets/da2082b4-f315-4b8f-b89e-02f4000917bb" />
 
 Enable it:
 
 ```bash
 ansible workers -i inventory -m file -a "src=/etc/nginx/sites-available/team.conf dest=/etc/nginx/sites-enabled/team.conf state=link" --become --forks 1
 ```
+<img width="1218" height="663" alt="image" src="https://github.com/user-attachments/assets/e7276754-fcec-4002-9ff1-6bc32e746df3" />
 
 Remove the default Nginx configuration:
 
 ```bash
 ansible workers -i inventory -m file -a "path=/etc/nginx/sites-enabled/default state=absent" --become --forks 1
 ```
+<img width="1217" height="683" alt="image" src="https://github.com/user-attachments/assets/2e5ec0f7-5c45-4129-b67e-afdac8ba5c3e" />
 
 Test Nginx:
 
 ```bash
 ansible workers -i inventory -m command -a "nginx -t" --become --forks 1
 ```
+<img width="1210" height="382" alt="image" src="https://github.com/user-attachments/assets/53b6e6b5-670f-42dc-baed-5525c85ed7bc" />
 
 Reload:
 
 ```bash
 ansible workers -i inventory -m service -a "name=nginx state=reloaded" --become --forks 1
 ```
+<img width="1215" height="700" alt="image" src="https://github.com/user-attachments/assets/1becb6f0-c159-4742-9083-39b2443605c5" />
 
 Test:
 
 ```bash
 curl -H "Host: NCR.opstree.com" http://<WORKER_PUBLIC_IP>
 ```
+<img width="1222" height="70" alt="image" src="https://github.com/user-attachments/assets/0c20edd7-7f02-4ebe-bb62-92d3de255017" />
 
 The response should contain the currently active team member's website.
 
 ---
 
-# 8. Website Rotation Script
+# Website Rotation Script
 
 Create the rotation script:
 
@@ -313,28 +284,23 @@ ansible workers -i inventory -m copy -a 'dest=/usr/local/bin/rotate-websites.sh 
 
 CURRENT=$(readlink -f /var/www/current)
 
-if [ \"$CURRENT\" = \"/var/www/tanya\" ]; then
-    ln -sfn /var/www/heena /var/www/current
-elif [ \"$CURRENT\" = \"/var/www/heena\" ]; then
+if [ \"$CURRENT\" = \"/var/www/garvit\" ]; then
+    ln -sfn /var/www/tanys /var/www/current
+elif [ \"$CURRENT\" = \"/var/www/anya\" ]; then
+    ln -sfn /var/www/sahil /var/www/current
+elif [ \"$CURRENT\" = \"/var/www/sahil\" ]; then
     ln -sfn /var/www/ankur /var/www/current
+elif [ \"$CURRENT\" = \"/var/www/ankur\" ]; then
+    ln -sfn /var/www/kuldeep /var/www/current
+elif [ \"$CURRENT\" = \"/var/www/kuldeep\" ]; then
+    ln -sfn /var/www/arhan /var/www/current
 else
-    ln -sfn /var/www/tanya /var/www/current
+    ln -sfn /var/www/garvit /var/www/current
 fi
 "' --become --forks 1
 ```
+<img width="1213" height="612" alt="image" src="https://github.com/user-attachments/assets/99b599f4-7515-4d84-b36d-7034b433bbad" />
 
-The script performs:
-
-```text
-Tanya
-  ↓
-Heena
-  ↓
-Ankur
-  ↓
-Tanya
-  ↓
-...
 ```
 
 Test it manually:
@@ -348,12 +314,13 @@ Check:
 ```bash
 ansible workers -i inventory -m command -a "readlink -f /var/www/current" --become --forks 1
 ```
+<img width="1217" height="470" alt="image" src="https://github.com/user-attachments/assets/66c6e98e-b8eb-470d-83d9-2c6162613dad" />
 
 Running the script repeatedly should cycle through the websites.
 
 ---
 
-# 9. Configure Cron
+#  Configure Cron
 
 ## For Assignment
 
@@ -364,12 +331,14 @@ Therefore the production cron schedule is:
 ```bash
 ansible workers -i inventory -m cron -a "name='Rotate team website' minute=0 hour='*/2' job='/usr/local/bin/rotate-websites.sh'" --become --forks 1
 ```
+<img width="1207" height="613" alt="image" src="https://github.com/user-attachments/assets/3e04e0af-f8b9-4ebd-a72a-74e0e8da6c92" />
 
 Verify:
 
 ```bash
 ansible workers -i inventory -m command -a "crontab -l" --become --forks 1
 ```
+<img width="1213" height="468" alt="image" src="https://github.com/user-attachments/assets/6d0a24d4-ee49-410e-b0a7-f6e982145206" />
 
 Expected:
 
@@ -378,26 +347,6 @@ Expected:
 0 */2 * * * /usr/local/bin/rotate-websites.sh
 ```
 
-This runs at:
-
-```text
-00:00
-02:00
-04:00
-06:00
-08:00
-...
-```
-
-Therefore:
-
-```text
-0–2 hours    → Tanya
-2–4 hours    → Heena
-4–6 hours    → Ankur
-6–8 hours    → Tanya
-...
-```
 
 ## For Testing
 
@@ -406,31 +355,21 @@ Waiting 2 hours is inconvenient during testing, so the schedule can temporarily 
 ```bash
 ansible workers -i inventory -m cron -a "name='Rotate team website' minute='*/2' job='/usr/local/bin/rotate-websites.sh'" --become --forks 1
 ```
+<img width="1216" height="705" alt="image" src="https://github.com/user-attachments/assets/b8eaee0b-b951-4d52-961d-6493d6bd563a" />
 
-Verify:
-
-```bash
-ansible workers -i inventory -m command -a "crontab -l" --become --forks 1
-```
-
-Expected:
-
-```text
-#Ansible: Rotate team website
-*/2 * * * * /usr/local/bin/rotate-websites.sh
-```
 
 After testing, change it back to the required 2-hour schedule.
 
 ---
 
-# 10. Install Apache
+#  Install Apache
 
 Install Apache:
 
 ```bash
 ansible workers -i inventory -m apt -a "name=apache2 state=present update_cache=yes" --become --forks 1
 ```
+<img width="1216" height="533" alt="image" src="https://github.com/user-attachments/assets/fd41efc2-70c1-4c7d-8300-9048f20ec4c8" />
 
 Apache initially tries to use port 80, but Nginx is already using port 80.
 
@@ -438,19 +377,21 @@ Therefore Apache is moved to port 8080.
 
 ---
 
-# 11. Configure Apache on Port 8080
+#  Configure Apache on Port 8080
 
 Change Apache's listening port:
 
 ```bash
 ansible workers -i inventory -m lineinfile -a "path=/etc/apache2/ports.conf regexp='^Listen ' line='Listen 8080'" --become --forks 1
 ```
+<img width="1216" height="649" alt="image" src="https://github.com/user-attachments/assets/e417b05c-edca-44b4-9134-ede86109e9c5" />
 
 Change the Apache virtual host:
 
 ```bash
 ansible workers -i inventory -m replace -a "path=/etc/apache2/sites-available/000-default.conf regexp='<VirtualHost \*:80>' replace='<VirtualHost *:8080>'" --become --forks 1
 ```
+<img width="1216" height="649" alt="image" src="https://github.com/user-attachments/assets/1a0db3c5-87af-4db3-94b8-673155d91396" />
 
 Test Apache:
 
@@ -458,34 +399,26 @@ Test Apache:
 ansible workers -i inventory -m command -a "apache2ctl configtest" --become --forks 1
 ```
 
-Expected:
+<img width="1212" height="293" alt="image" src="https://github.com/user-attachments/assets/285de552-f69f-4e66-a360-1826a47672fd" />
 
-```text
-Syntax OK
-```
 
 Start and enable Apache:
 
 ```bash
 ansible workers -i inventory -m service -a "name=apache2 state=started enabled=yes" --become --forks 1
 ```
+<img width="1212" height="445" alt="image" src="https://github.com/user-attachments/assets/a69c99fb-df4a-48f6-afa0-3bd67a2aace2" />
 
 Verify:
 
 ```bash
 ansible workers -i inventory -m command -a "ss -lntp" --become --forks 1
 ```
-
-The expected architecture is:
-
-```text
-Nginx   → :80
-Apache  → :8080
-```
+<img width="1217" height="564" alt="image" src="https://github.com/user-attachments/assets/9e643b8e-3f1e-4e2b-8209-c5ae7acfb6af" />
 
 ---
 
-# 12. Configure Apache to Serve the Rotating Website
+# Configure Apache to Serve the Rotating Website
 
 Apache must serve:
 
@@ -504,24 +437,27 @@ Change the DocumentRoot:
 ```bash
 ansible workers -i inventory -m replace -a "path=/etc/apache2/sites-available/000-default.conf regexp='DocumentRoot /var/www/html' replace='DocumentRoot /var/www/current'" --become --forks 1
 ```
+<img width="1217" height="564" alt="image" src="https://github.com/user-attachments/assets/4dcc2015-361a-4700-95bd-b48d32035791" />
 
 Restart Apache:
 
 ```bash
 ansible workers -i inventory -m service -a "name=apache2 state=restarted" --become --forks 1
 ```
+<img width="1215" height="604" alt="image" src="https://github.com/user-attachments/assets/b24f2766-4901-416f-aa20-e0e1fe2fc36c" />
 
 Test Apache:
 
 ```bash
 ansible workers -i inventory -m command -a "curl -s http://127.0.0.1:8080" --become --forks 1
 ```
+<img width="1210" height="399" alt="image" src="https://github.com/user-attachments/assets/5f0e4173-7954-476e-9be4-51c15af5e064" />
 
 Apache should now return the currently active team member's website.
 
 ---
 
-# 13. Configure Nginx as Reverse Proxy
+# Configure Nginx as Reverse Proxy
 
 Replace the Nginx configuration:
 
@@ -540,12 +476,14 @@ ansible workers -i inventory -m copy -a 'dest=/etc/nginx/sites-available/team.co
 }
 " mode=0644' --become --forks 1
 ```
+<img width="1210" height="674" alt="image" src="https://github.com/user-attachments/assets/660c790c-3b4a-441d-8de6-3f07e99455ce" />
 
 Test Nginx:
 
 ```bash
 ansible workers -i inventory -m command -a "nginx -t" --become --forks 1
 ```
+<img width="1212" height="446" alt="image" src="https://github.com/user-attachments/assets/ca0de65d-0eb5-4f17-b59c-31dd733c5a56" />
 
 Reload Nginx:
 
@@ -555,7 +493,7 @@ ansible workers -i inventory -m service -a "name=nginx state=reloaded" --become 
 
 ---
 
-# 14. Final Request Flow
+# Final Request Flow
 
 The final architecture is:
 
@@ -578,267 +516,29 @@ The final architecture is:
                            |
                            v
                     /var/www/current
-                           |
-              +------------+------------+
-              |            |            |
-              v            v            v
-            Tanya        Heena        Ankur
 ```
 
-The cron job changes:
+Configure /etc/hosts
 
-```text
-/var/www/current
-```
+Because Nginx uses:
 
-every 2 hours.
+server_name NCR.opstree.com;
 
-Therefore the complete request path is:
+add the hostname to the /etc/hosts file on the computer where the browser is running:
 
-```text
-Browser
-   ↓
-Nginx :80
-   ↓
-Apache :8080
-   ↓
-/var/www/current
-   ↓
-Current team member website
-```
+sudo nano /etc/hosts
 
----
+Add:
 
-# 15. Verification
+65.2.69.67 NCR.opstree.com
 
-## Check Nginx
+Save the file.
 
-```bash
-ansible workers -i inventory -m command -a "systemctl is-active nginx" --become --forks 1
-```
+Then open the browser and visit:
 
-Expected:
+http://NCR.opstree.com
 
-```text
-active
-```
+<img width="1205" height="701" alt="image" src="https://github.com/user-attachments/assets/eb324def-e569-4d18-a9f9-a17641f39b5e" />
+<img width="1217" height="798" alt="image" src="https://github.com/user-attachments/assets/9ffec729-3780-4e85-951e-50e269927d33" />
+<img width="1217" height="798" alt="image" src="https://github.com/user-attachments/assets/5f7e24cf-d45e-4424-87e5-3a70bf04e47e" />
 
-## Check Apache
-
-```bash
-ansible workers -i inventory -m command -a "systemctl is-active apache2" --become --forks 1
-```
-
-Expected:
-
-```text
-active
-```
-
-## Check Ports
-
-```bash
-ansible workers -i inventory -m command -a "ss -lntp" --become --forks 1
-```
-
-Expected:
-
-```text
-Nginx   → 0.0.0.0:80
-Apache  → *:8080
-```
-
-## Check Current Website
-
-```bash
-ansible workers -i inventory -m command -a "readlink -f /var/www/current" --become --forks 1
-```
-
-Example:
-
-```text
-/var/www/ankur
-```
-
-## Check Log Usage
-
-```bash
-ansible workers -i inventory -m command -a "du -sh /var/log/nginx" --become --forks 1
-```
-
-The current usage should remain well below 1 GB.
-
-## Check Cron
-
-```bash
-ansible workers -i inventory -m command -a "crontab -l" --become --forks 1
-```
-
-For the actual assignment:
-
-```text
-0 */2 * * * /usr/local/bin/rotate-websites.sh
-```
-
-## Test Through Nginx
-
-```bash
-curl -H "Host: NCR.opstree.com" http://<WORKER_PUBLIC_IP>
-```
-
-The response should be the currently active team member's webpage.
-
----
-
-# 16. AWS Security Group
-
-For external HTTP access, the worker Security Group must allow:
-
-```text
-TCP 80
-```
-
-SSH requires:
-
-```text
-TCP 22
-```
-
-Apache's port `8080` does **not** need to be publicly exposed because Nginx communicates with Apache locally:
-
-```text
-Nginx → 127.0.0.1:8080 → Apache
-```
-
----
-
-# 17. Ansible Ad-Hoc Modules Used
-
-This assignment was implemented using ad-hoc commands only.
-
-### `apt`
-
-Used to install:
-
-```text
-nginx
-apache2
-logrotate
-```
-
-### `service`
-
-Used to:
-
-```text
-start
-restart
-reload
-enable
-```
-
-Nginx and Apache.
-
-### `file`
-
-Used to create:
-
-- Website directories
-- Symbolic links
-- Nginx configuration links
-
-### `copy`
-
-Used to create:
-
-- HTML files
-- Nginx configuration
-- Website rotation script
-- Logrotate configuration
-
-### `command`
-
-Used for:
-
-- Verification
-- `nginx -t`
-- `systemctl`
-- `curl`
-- `ss`
-- `readlink`
-- `du`
-
-### `lineinfile`
-
-Used to change Apache's listening port.
-
-### `replace`
-
-Used to modify Apache's virtual host and DocumentRoot.
-
-### `cron`
-
-Used to schedule automatic website rotation.
-
----
-
-# 18. Why `--forks 1` Was Used
-
-By default, Ansible can execute operations on multiple hosts concurrently.
-
-For this assignment, the requirement was to update worker nodes one by one.
-
-Therefore commands were executed with:
-
-```bash
---forks 1
-```
-
-This ensures sequential execution:
-
-```text
-Controller
-    |
-    +----> Worker 1
-    |
-    +----> Worker 2
-    |
-    +----> Worker 3
-```
-
-No playbook was used; the entire configuration was performed through **Ansible ad-hoc commands**.
-
----
-
-# Final Result
-
-The completed environment provides:
-
-```text
-3 Worker Nodes
-      |
-      +---- Nginx :80
-      |         |
-      |         +---- Reverse Proxy
-      |                    |
-      |                    v
-      |               Apache :8080
-      |                    |
-      |                    v
-      |              /var/www/current
-      |                    |
-      |          +---------+---------+
-      |          |         |         |
-      |        Tanya     Heena     Ankur
-      |
-      +---- Nginx Log Rotation
-      |         |
-      |         +---- Logs rotated/compressed
-      |              to control disk usage
-      |
-      +---- Cron
-                |
-                +---- Website changes every 2 hours
-```
-
-The assignment is implemented using **Ansible ad-hoc commands**, with workers processed sequentially using `--forks 1`.
