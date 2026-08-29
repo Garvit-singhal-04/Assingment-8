@@ -30,6 +30,7 @@ Assignment4/
             ├── directories.yml
             └── git.yml
 ```
+<img width="987" height="377" alt="image" src="https://github.com/user-attachments/assets/a8120c5a-e7e7-4f1e-8deb-73fbad94d36e" />
 
 Only the directories and files required for this implementation are included.
 
@@ -275,17 +276,7 @@ First, verify that Ansible can connect to the managed server.
 ```bash
 ansible managed -i inventory -m ping
 ```
-
-Expected result:
-
-```bash
-server1 | SUCCESS => {
-    "changed": false,
-    "ping": "pong"
-}
-```
-
-The Python interpreter warning may appear during this command. It does not indicate a failure if the result is `SUCCESS`.
+<img width="1917" height="312" alt="image" src="https://github.com/user-attachments/assets/df3f7b51-1e2a-4d36-8d7a-6afa3a11e0cb" />
 
 ---
 
@@ -296,12 +287,7 @@ Run a syntax check before executing the playbook.
 ```bash
 ansible-playbook -i inventory site.yml --syntax-check
 ```
-
-Expected output:
-
-```bash
-playbook: site.yml
-```
+<img width="1432" height="120" alt="image" src="https://github.com/user-attachments/assets/c2b4a781-55c9-4017-be72-59285f6196a0" />
 
 ---
 
@@ -314,6 +300,7 @@ ansible-playbook -i inventory site.yml
 ```
 
 Ansible will configure the managed server according to the values defined in `defaults/main.yml`.
+<img width="1917" height="935" alt="image" src="https://github.com/user-attachments/assets/429f76e4-788c-43cc-a41e-1e5181e0e69a" />
 
 ---
 
@@ -326,12 +313,14 @@ Check Git:
 ```bash
 ansible managed -i inventory -m shell -a "git --version"
 ```
+<img width="1911" height="205" alt="image" src="https://github.com/user-attachments/assets/aaaa4970-83ee-4df4-b64e-5ce09d5a4f16" />
 
 Check curl:
 
 ```bash
 ansible managed -i inventory -m shell -a "curl --version | head -1"
 ```
+<img width="1917" height="217" alt="image" src="https://github.com/user-attachments/assets/f602613f-a796-4e45-b14d-eadd49d6678c" />
 
 ---
 
@@ -342,12 +331,14 @@ Check the `devops` group:
 ```bash
 ansible managed -i inventory -m shell -a "getent group devops"
 ```
+<img width="1887" height="185" alt="image" src="https://github.com/user-attachments/assets/3bcd9326-78e2-40fb-8155-5b8945a2a71f" />
 
 Check the `developers` group:
 
 ```bash
 ansible managed -i inventory -m shell -a "getent group developers"
 ```
+<img width="1917" height="190" alt="image" src="https://github.com/user-attachments/assets/dd627793-84f3-4fbf-a2ad-246360bd4db0" />
 
 ---
 
@@ -358,18 +349,21 @@ Check `devops1`:
 ```bash
 ansible managed -i inventory -m shell -a "id devops1"
 ```
+<img width="1917" height="192" alt="image" src="https://github.com/user-attachments/assets/f1d2121f-8545-48dc-805c-f9761f4d2bc6" />
 
 Check `devops2`:
 
 ```bash
 ansible managed -i inventory -m shell -a "id devops2"
 ```
+<img width="1915" height="188" alt="image" src="https://github.com/user-attachments/assets/8957b5a4-862a-471c-b39d-461761f895d2" />
 
 Check `developer1`:
 
 ```bash
 ansible managed -i inventory -m shell -a "id developer1"
 ```
+<img width="1917" height="188" alt="image" src="https://github.com/user-attachments/assets/db1c458f-d932-4b77-bd17-35f123ebbdec" />
 
 ---
 
@@ -378,6 +372,7 @@ ansible managed -i inventory -m shell -a "id developer1"
 ```bash
 ansible managed -i inventory -m shell -a "ls -ld /opt/devops /opt/projects /opt/scripts /opt/logs"
 ```
+<img width="1912" height="247" alt="image" src="https://github.com/user-attachments/assets/e198027d-1532-43ca-9fff-c4d5dcd1b1fd" />
 
 This verifies that the required directories exist and allows their ownership and permissions to be checked.
 
@@ -390,12 +385,14 @@ Check that the repository exists:
 ```bash
 ansible managed -i inventory -m shell -a "ls -ld /opt/projects/spring3hibernate"
 ```
+<img width="1917" height="187" alt="image" src="https://github.com/user-attachments/assets/3df7c098-23ec-44e2-be7d-326c737bb2b0" />
 
 Check repository status:
 
 ```bash
 ansible managed -i inventory -m shell -a "cd /opt/projects/spring3hibernate && git status"
 ```
+<img width="1890" height="260" alt="image" src="https://github.com/user-attachments/assets/b09a2070-4299-4003-b3c9-958e02d35ae0" />
 
 The command should show that the directory is a Git repository and display its current branch and status.
 
